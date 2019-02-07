@@ -3,10 +3,7 @@ package com.cozauto.datasetmgr.service;
 import com.cozauto.datasetmgr.model.Vehicle;
 import org.json.JSONObject;
 import org.json.JSONTokener;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,16 +21,15 @@ public class VehicleDealerService {
 
     public List<Vehicle> getVehicleDelaerInfo(String datasetId, List<String> vehicleList) {
 
-        StringBuilder stringBuilder = new StringBuilder();
+
         //Vehicles vehicles = new Vehicles();
         List<String> lstVehicleIds = new ArrayList<>();
         String[] arr = null;
 
-        System.out.println("Begin /GET getVehicleIds!");
-        stringBuilder.append("http://vautointerview.azurewebsites.net/api/");
+        List<Vehicle> lstVehicle = new ArrayList<>();
 
-        stringBuilder.append(datasetId);
-        stringBuilder.append("/vehicles/");
+        System.out.println("Begin /GET getVehicleIds!");
+
 
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Arrays.asList(org.springframework.http.MediaType.parseMediaType("application/json")));
@@ -45,36 +41,52 @@ public class VehicleDealerService {
         restTemplate.getMessageConverters().add(mappingJackson2HttpMessageConverter);
 
 
-        for(String vehicle : vehicleList){
+        for(/*String vehicle : vehicleList*/ int i=0; i<vehicleList.size(); i++){
+            StringBuilder stringBuilder = new StringBuilder();
 
-            stringBuilder.append(vehicle);
+            stringBuilder.append("http://vautointerview.azurewebsites.net/api/");
+
+            stringBuilder.append(datasetId);
+            stringBuilder.append("/vehicles/");
+
+            //http://vautointerview.azurewebsites.net/api/ag1WUxiN1gg/vehicles/1580284399
+            if (i == 0) {
+                String result = vehicleList.get(0).substring(1, vehicleList.get(0).length());
+                stringBuilder.append(result);
+            } else if (i == vehicleList.size() - 1) {
+                String result = vehicleList.get(i).substring(0, vehicleList.get(i).length() - 1);
+                stringBuilder.append(result);
+            } else {
+                stringBuilder.append(vehicleList.get(i));
+            }
+
 
             ResponseEntity<String> getResponse = restTemplate.getForEntity(stringBuilder.toString(), String.class);
 
-            //JSONTokener jsonTokener = new JSONTokener(getResponse.getBody());
-            JSONTokener jsonTokener = new JSONTokener(getResponse.getBody());
-            JSONObject jsonObject = new JSONObject(jsonTokener);
-            Object vehicleIds = jsonObject.get("vehicleId");
-            Object year = jsonObject.get("year");
-            Object make = jsonObject.get("make");
-            Object model = jsonObject.get("model");
-            Object dealerId = jsonObject.get("dealerId");
-            //System.out.println("vehicleIds>>>>>" + vehicleIds.toString());
+            if(getResponse.getStatusCode()!= HttpStatus.BAD_REQUEST){
+                Vehicle vehicle1 = new Vehicle();
 
+                JSONTokener jsonTokener = new JSONTokener(getResponse.getBody());
+                JSONObject jsonObject = new JSONObject(jsonTokener);
+                Object vehicleId = jsonObject.get("vehicleId");
+                Object year = jsonObject.get("year");
+                Object make = jsonObject.get("make");
+                Object model = jsonObject.get("model");
+                Object dealerId = jsonObject.get("dealerId");
+
+                vehicle1.setVehicleId(Long.parseLong(vehicleId.toString()));
+                vehicle1.setDealerId(Long.parseLong(dealerId.toString()));
+                vehicle1.setYear(Integer.parseInt(year.toString()));
+                vehicle1.setMake(make.toString());
+                vehicle1.setModel(model.toString());
+
+                lstVehicle.add(vehicle1);
+            }
 
 
         }
 
-        // Send the request as GET
-
-        ResponseEntity<String> getResponse = restTemplate.getForEntity(stringBuilder.toString(), String.class);
-
-
-
-
-
-        return null;
-
+        return lstVehicle;
 
     }
 
