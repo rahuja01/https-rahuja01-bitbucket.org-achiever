@@ -1,6 +1,7 @@
 package com.cozauto.datasetmgr.service;
 
 import com.cozauto.datasetmgr.model.Vehicle;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.springframework.http.*;
@@ -10,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class VehicleDealerService {
 
@@ -40,8 +42,48 @@ public class VehicleDealerService {
         mappingJackson2HttpMessageConverter.setSupportedMediaTypes(Arrays.asList(MediaType.ALL));
         restTemplate.getMessageConverters().add(mappingJackson2HttpMessageConverter);
 
+/*        StringBuilder stringBuilder = new StringBuilder();
 
-        for(/*String vehicle : vehicleList*/ int i=0; i<vehicleList.size(); i++){
+        stringBuilder.append("http://vautointerview.azurewebsites.net/api/");
+
+        stringBuilder.append(datasetId);
+        stringBuilder.append("/vehicles/");*/
+
+        /*List<String> listOfResponses = vehicleList.stream()
+                .parallel().map({vehicle ->
+                        ResponseEntity<String> getResponse = restTemplate.getForEntity(stringBuilder.toString(), String.class);
+                })
+        .collect(Collectors.toList());*/
+
+/*
+        List<ListenableFuture<ResponseEntity<String>>> responseFutures = new ArrayList<>();
+        for (int i=0; i<vehicleList.size(); i++) {
+            // FIXME studentId is not used
+            ListenableFuture<ResponseEntity<String>> responseEntityFuture =
+                    restTemplate.exchange(stringBuilder.toString(),HttpMethod.GET,entity, String.class);
+            responseFutures.add(responseEntityFuture);
+        }
+// now all requests were send, so we can process the responses
+        List<String> listOfResponses = new ArrayList<>();
+        for (ListenableFuture<ResponseEntity<String>> future: responseFutures) {
+            try {
+                String respBody = future.get().getBody();
+                listOfResponses.add(respBody);
+            } catch (Exception ex) {
+                throw new ApplicationException("Exception while making Rest call.", ex);
+            }
+        }
+
+*/
+
+
+
+
+
+
+
+
+        for(/*String vehicle : vehicleList*/ int i=0; i<vehicleList.size(); i++) {
             StringBuilder stringBuilder = new StringBuilder();
 
             stringBuilder.append("http://vautointerview.azurewebsites.net/api/");
@@ -59,6 +101,8 @@ public class VehicleDealerService {
             } else {
                 stringBuilder.append(vehicleList.get(i));
             }
+
+
 
 
             ResponseEntity<String> getResponse = restTemplate.getForEntity(stringBuilder.toString(), String.class);

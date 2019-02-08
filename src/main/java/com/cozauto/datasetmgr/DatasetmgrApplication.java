@@ -2,15 +2,17 @@ package com.cozauto.datasetmgr;
 
 import com.cozauto.datasetmgr.model.Dealer;
 import com.cozauto.datasetmgr.model.Vehicle;
-import com.cozauto.datasetmgr.service.DatasetService;
-import com.cozauto.datasetmgr.service.DealerService;
-import com.cozauto.datasetmgr.service.VehicleDealerService;
-import com.cozauto.datasetmgr.service.VehicleService;
+import com.cozauto.datasetmgr.service.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import javax.json.Json;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class DatasetmgrApplication {
@@ -36,7 +38,7 @@ public class DatasetmgrApplication {
 			vehicleIds = vehicleService.getVehicleIds(datasetId);
 		}
 
-		vehicleIds.forEach(value->System.out.println("Vehicle Ids are >>>>>>>"+value));
+		//vehicleIds.forEach(value->System.out.println("Vehicle Ids are >>>>>>>"+value));
 
 
         //retrieving the list of Vehicle for the datasetId and Vehicles
@@ -45,7 +47,7 @@ public class DatasetmgrApplication {
 
         lstVehicle = vehicleDealerService.getVehicleDelaerInfo(datasetId, vehicleIds);
 
-        if(lstVehicle!=null){
+/*        if(lstVehicle!=null){
 
             lstVehicle.forEach(vehicle->
                     System.out.println("vehicle Make is *****"+vehicle.getMake() +
@@ -57,7 +59,7 @@ public class DatasetmgrApplication {
 
             );
 
-        }
+        }*/
 
         StringBuilder dealerIdStringCommaSeparated = new StringBuilder();
 
@@ -88,21 +90,28 @@ public class DatasetmgrApplication {
 
 		Vehicle[] vehicles = new Vehicle[lstDealerInfo.size()];
 
+		Set<Vehicle> myset = lstVehicle.stream().collect(Collectors.toSet());
+
+
 		for(int i=0; i<lstDealerInfo.size(); i++) {
 
-			for (Vehicle vehicle : lstVehicle) {
-
-
+			for (Vehicle vehicle : myset) {
 
 				if (lstDealerInfo.get(i).getDealerId() == vehicle.getDealerId()) {
+					if(lstDealerInfo.contains(vehicle))
+						continue;
 
 					//Vehicle[] vehicles = null;
+
 					Dealer dealer = new Dealer();
 					Vehicle vehicleToAdd = new Vehicle();
+					dealer.setDealerId(lstDealerInfo.get(i).getDealerId());
+					dealer.setName(lstDealerInfo.get(i).getName());
+
 					vehicleToAdd.setModel(vehicle.getModel());
 					vehicleToAdd.setMake(vehicle.getMake());
 					vehicleToAdd.setYear(vehicle.getYear());
-					//vehicleToAdd.setDealerId(vehicle.getDealerId());
+					vehicleToAdd.setDealerId(vehicle.getDealerId());
 					vehicleToAdd.setVehicleId(vehicle.getVehicleId());
 					vehicles[i] = vehicleToAdd;
 					dealer.setVehicle(vehicles);
@@ -114,37 +123,67 @@ public class DatasetmgrApplication {
 
 		}
 
-
-
-
 		String multipleDealers = "";
 
-		for (Dealer dealer : lstDealerInfo) {
+		GsonBuilder gsonBuilder = new GsonBuilder();
 
-			Vehicle[] vehicle = dealer.getVehicle();
+		Gson gson = gsonBuilder.create();
 
-			for (int i = 0; i < vehicle.length; i++) {
+		String json = gson.toJson(lstDealerInfo);
 
-				String vehicleJson = Json.createObjectBuilder()
+
+		/*for (*//*Dealer dealer : lstDealerInfo*//*int i=0; i<lstDealerInfo.size();i++) {
+
+			Vehicle[] vehicle = *//*dealer.getVehicle()*//*lstDealerInfo.get(i).getVehicle();
+
+			//for (int i = 0; i < vehicle.length; i++) {
+
+*//*				String vehicleJson = Json.createObjectBuilder()
 						.add("vehicleId", vehicle[i].getVehicleId())
 						.add("year", vehicle[i].getYear())
 						.add("make", vehicle[i].getMake())
 						.add("model", vehicle[i].getModel()).build().toString();
 
-				String dealerJson = Json.createObjectBuilder()
+				String dealerJson = Json.createArrayBuilder()
 						.add("dealerId", dealer.getDealerId())
-						.add("name", "testName")
+						.add("name", dealer.getName())
 						.add("vehicles", vehicleJson)
 						.build()
-						.toString();
+						.toString();*//*
 
-				multipleDealers = Json.createObjectBuilder()
-						.add("dealers", dealerJson).build().toString();
-			}
+				multipleDealers =  multipleDealers + Json.createArrayBuilder()
+						.add(Json.createObjectBuilder()
+						.add("dealerId", lstDealerInfo.get(i).getDealerId())
+						.add("name", lstDealerInfo.get(i).getName())
+						.add("vehicles",Json.createArrayBuilder()
+						.add(Json.createObjectBuilder()
+						.add("vehicleId", vehicle[i].getVehicleId())
+						.add("year", vehicle[i].getYear())
+						.add("make", vehicle[i].getMake())
+						.add("model", vehicle[i].getModel()))));
+
+
+			//}
 
 		}
+		//multipleDealers.replaceAll("\\\\", "");
+		//System.out.println(multipleDealers);
 
-		System.out.println("JSON Final ------------"+multipleDealers);
+
+		String temp = Json.createObjectBuilder()
+				.add("dealers", multipleDealers).build().toString();
+		temp.replaceAll("\\\\", "");*/
+
+		String temp = Json.createObjectBuilder()
+				.add("dealers", json).toString();
+		temp.replaceAll("\\\\", "");
+
+		System.out.println(temp);
+
+		DatasetPostService datasetPostService = new DatasetPostService();
+		datasetPostService.postDataSetService(datasetId,temp);
+
+		//System.out.println("JSON Final ------------"+multipleDealers);
 
 		long finish = System.currentTimeMillis();
 
@@ -153,11 +192,6 @@ public class DatasetmgrApplication {
 		long timeElapsed = finish - start;
 
 		System.out.println("Time ELAPSED ------------"+timeElapsed);
-
-
-
-
-
 
 
 	}
