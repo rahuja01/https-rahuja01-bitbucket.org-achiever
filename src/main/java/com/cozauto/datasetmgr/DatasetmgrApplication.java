@@ -125,20 +125,32 @@ public class DatasetmgrApplication {
 
 		String multipleDealers = "";
 
-		GsonBuilder gsonBuilder = new GsonBuilder();
+		/*GsonBuilder gsonBuilder = new GsonBuilder();
 
 		Gson gson = gsonBuilder.create();
 
-		String json = gson.toJson(lstDealerInfo);
+		String json = gson.toJson(lstDealerInfo);*/
+
+		//JSONObject jsonObject = new JSONObject();
+
+		JSONArray JsonDealersArray = new JSONArray();
+
+		for (/*Dealer dealer : lstDealerInfo*/int i=0; i<lstDealerInfo.size();i++) {
+
+			Vehicle[] vehicle = lstDealerInfo.get(i).getVehicle();
+
+			LinkedHashMap map = new LinkedHashMap();
+			//JSONObject jsonArrayDealer = new JSONObject();
+
+			map.put("name", lstDealerInfo.get(i).getName());
+			map.put("dealerId", lstDealerInfo.get(i).getDealerId());
+			JSONArray jsonArrayVehicle = new JSONArray();
 
 
-		/*for (*//*Dealer dealer : lstDealerInfo*//*int i=0; i<lstDealerInfo.size();i++) {
 
-			Vehicle[] vehicle = *//*dealer.getVehicle()*//*lstDealerInfo.get(i).getVehicle();
+			for (int j = 0; j < vehicle.length; j++) {
 
-			//for (int i = 0; i < vehicle.length; i++) {
-
-*//*				String vehicleJson = Json.createObjectBuilder()
+				/*String vehicleJson = Json.createObjectBuilder()
 						.add("vehicleId", vehicle[i].getVehicleId())
 						.add("year", vehicle[i].getYear())
 						.add("make", vehicle[i].getMake())
@@ -149,39 +161,67 @@ public class DatasetmgrApplication {
 						.add("name", dealer.getName())
 						.add("vehicles", vehicleJson)
 						.build()
-						.toString();*//*
+						.toString();*/
 
-				multipleDealers =  multipleDealers + Json.createArrayBuilder()
+				/*multipleDealers =  multipleDealers + Json.createArrayBuilder()
 						.add(Json.createObjectBuilder()
 						.add("dealerId", lstDealerInfo.get(i).getDealerId())
 						.add("name", lstDealerInfo.get(i).getName())
 						.add("vehicles",Json.createArrayBuilder()
 						.add(Json.createObjectBuilder()
-						.add("vehicleId", vehicle[i].getVehicleId())
-						.add("year", vehicle[i].getYear())
-						.add("make", vehicle[i].getMake())
-						.add("model", vehicle[i].getModel()))));
+						.add("vehicleId", vehicle[j].getVehicleId())
+						.add("year", vehicle[j].getYear())
+						.add("make", vehicle[j].getMake())
+						.add("model", vehicle[j].getModel()))))
+				.build().toString();
+				multipleDealers.replaceAll("\\\\", "");*/
+				LinkedHashMap<String, Object> m = new LinkedHashMap(4);
 
 
-			//}
+				//m.put("dealerId", lstDealerInfo.get(i).getDealerId());
+				//m.put("name", lstDealerInfo.get(i).getName());
+				//m.put("vehicles", jsonArray);
 
+				m.put("vehicleId", Long.toString(vehicle[j].getVehicleId()));
+				m.put("year", Long.toString(vehicle[j].getYear()));
+				m.put("make", vehicle[j].getMake());
+				m.put("model", vehicle[j].getModel());
+
+				/*m.entrySet().stream()
+						.forEach(vehicleMap ->jsonArrayVehicle.put(vehicleMap));*/
+
+				GsonBuilder gsonBuilder = new GsonBuilder();
+
+				Gson gson = gsonBuilder.create();
+
+				String string = gson.toJson(m,LinkedHashMap.class);
+
+				jsonArrayVehicle.put(i,string.replaceAll("\\\\", ""));
+
+			}
+			map.put("vehicles", jsonArrayVehicle);
+			JsonDealersArray.put(map);
 		}
+
+		JSONObject jsonObjectFinal = new JSONObject();
+		jsonObjectFinal.put("dealers", JsonDealersArray);
 		//multipleDealers.replaceAll("\\\\", "");
 		//System.out.println(multipleDealers);
 
 
-		String temp = Json.createObjectBuilder()
+		/*String temp = Json.createObjectBuilder()
 				.add("dealers", multipleDealers).build().toString();
 		temp.replaceAll("\\\\", "");*/
 
-		String temp = Json.createObjectBuilder()
-				.add("dealers", json).toString();
-		temp.replaceAll("\\\\", "");
+		/*String temp = Json.createObjectBuilder()
+				.add("dealers", multipleDealers).build().toString();
+		//String finalTemp = "{" +
+		temp.replaceAll("\\\\\\\\", "");*/
 
-		System.out.println(temp);
+		System.out.println(jsonObjectFinal.toString());
 
 		DatasetPostService datasetPostService = new DatasetPostService();
-		datasetPostService.postDataSetService(datasetId,temp);
+		datasetPostService.postDataSetService(datasetId,jsonObjectFinal.toString());
 
 		//System.out.println("JSON Final ------------"+multipleDealers);
 
